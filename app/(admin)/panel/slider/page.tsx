@@ -1,6 +1,7 @@
 "use client";
 
 import { supabase } from "@/lib/supabase";
+import { TrashIcon } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
@@ -35,15 +36,15 @@ const SliderPanel = () => {
   //form submit olanda storage e ve table a fotograflari yuklemek ucun
 
   const handleFormSubmit = async (e: any) => {
+    if (!addingSliderFile) {
+      alert("Duzgun foto Yukleyin");
+      return;
+    }
     e.preventDefault();
     setUploading(true);
     const fileuzantisi = addingSliderFile?.name.split(".").pop();
     const fileName = `${Math.random()}.${fileuzantisi}`;
 
-    if (!addingSliderFile) {
-      alert("Duzgun foto Yukleyin");
-      return;
-    }
     const { error: uploadError } = await supabase.storage
       .from("slider-images")
       .upload(fileName, addingSliderFile);
@@ -67,6 +68,34 @@ const SliderPanel = () => {
     setUploading(false);
   };
 
+  //hem storeage hem tableden fotonu silmek
+  const handleDeleteSlideImage = async (id: string, imageUrl: string) => {
+    if (!confirm("Sekili silmek istediyinize eminsiniz ?")) return;
+
+    try {
+      const fileName = imageUrl.split("/").pop();
+
+      if (!fileName) return;
+
+      const { error: storageError } = await supabase.storage
+        .from("slider-images")
+        .remove([fileName]);
+      if (storageError) throw storageError;
+
+      const { error: dbError } = await supabase
+        .from("slides")
+        .delete()
+        .eq("id", id);
+      if (dbError) throw dbError;
+
+      alert("Sekil silindi");
+
+      setSliderPhotos((prev) => prev.filter((foto) => foto.id !== id));
+    } catch (error) {
+      alert("Silinmə zamanı xəta: " + error);
+    }
+  };
+
   return (
     <div>
       {/* datadan gelen fotolari ekrana listelemek */}
@@ -80,15 +109,27 @@ const SliderPanel = () => {
               Yuklenir...
             </div>
           ) : (
-            <div className="flex mt-3 gap-5 justify-center">
+            <div className="relative flex mt-3 gap-5 justify-center flex-wrap">
               {sliderPhotos.map((foto) => (
-                <Image
-                  src={foto.image_url}
-                  width={150}
-                  height={150}
-                  alt="fotos"
+                <div
                   key={foto.id}
-                />
+                  className="relative group border-2 border-gray-200 rounded-lg overflow-hidden shadow-sm w-[150px] h-[150px]"
+                >
+                  <Image
+                    src={foto.image_url}
+                    fill // Bu, şəkli olduğu div-in içinə tam doldurur
+                    className="object-cover"
+                    alt="slider-photo"
+                  />
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <TrashIcon
+                      className="text-red-600"
+                      onClick={() =>
+                        handleDeleteSlideImage(foto.id, foto.image_url)
+                      }
+                    />
+                  </div>
+                </div>
               ))}
             </div>
           )}
