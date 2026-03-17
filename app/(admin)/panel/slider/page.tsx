@@ -1,122 +1,139 @@
 "use client";
-import React, { useEffect, useState } from "react";
+
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
-import { Trash2Icon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useEffect, useState } from "react";
 
-const PanelSlider = () => {
-  const [slides, setSlides] = useState<any[]>([]);
+const SliderPanel = () => {
+  //movcut olan slidelarin state i
+  const [sliderPhotos, setSliderPhotos] = useState<any[]>([]);
+  //inputtan gelen foto
+  const [addingSliderFile, setAddingSliderFile] = useState<File | null>(null);
+  // dataya resim gonderendeki loader
+  const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const fetchSlides = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("slides")
-        .select("*")
-        .order("order", { ascending: true });
-      if (error) throw error;
-      setSlides(data || []);
-    } catch (error) {
-      console.error("Slider yüklənməsində xəta:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  //sehife acilanda database de olan fotograflari cekmek ucun
   useEffect(() => {
+    const fetchSlides = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("slides")
+          .select("*")
+          .order("order", { ascending: true });
+        if (error) console.log(error);
+        setSliderPhotos(data || []);
+      } catch (error) {
+        alert("slidelar cekilerken problem oldu" + error);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchSlides();
   }, []);
 
-  const deleteSlidePhoto = async (id: string, image_url: string) => {
-    // Storage içindəki dosyanın path'ini URL'den ayırırıq
-    const path = image_url.split("slider-images/")[1];
+  //form submit olanda storage e ve table a fotograflari yuklemek ucun
 
-    try {
-      // 1) Əvvəlcə storage-dan şəkli silirik
-      if (path) {
-        const { error: storageError } = await supabase.storage
-          .from("slider-images")
-          .remove([path]);
+  const handleFormSubmit = async (e: any) => {
+    e.preventDefault();
+    setUploading(true);
+    const fileuzantisi = addingSliderFile?.name.split(".").pop();
+    const fileName = `${Math.random()}.${fileuzantisi}`;
 
-        if (storageError) {
-          console.error("Storage-dan şəkil silinərkən xəta:", storageError);
-          // Storage silinməsə də davam edə bilərik, amma xəbərdar olmaq üçün log saxlayırıq
-        }
-      }
-
-      // 2) Sonra slides cədvəlindən DB səviyyəsində qeydi silirik
-      const { error: deleteError } = await supabase
-        .from("slides")
-        .delete()
-        .eq("id", id);
-
-      if (deleteError) {
-        console.error("Supabase 'slides' delete xətası:", deleteError);
-        // Burada return etməyimiz vacibdir ki, DB-də silinmə uğursuz olarsa
-        // front-end state-dən element silinməsin və refresh sonrası "geri gəlmiş" kimi görünməsin
-        return;
-      }
-
-      // 3) Əgər DB-də silinmə uğurludursa, front-end state-i yeniləyirik
-      setSlides((prevSlides) => prevSlides.filter((slide) => slide.id !== id));
-    } catch (error) {
-      console.error("Slayd silinərkən gözlənilməyən xəta:", error);
+    if (!addingSliderFile) {
+      alert("Duzgun foto Yukleyin");
+      return;
     }
-  };
+    const { error: uploadError } = await supabase.storage
+      .from("slider-images")
+      .upload(fileName, addingSliderFile);
+    if (uploadError) {
+      alert("fotograf storage e yuklenerken xeta bash verdi" + uploadError);
+    }
 
-  const uploadSlidePhoto = async () => {};
+    const { data: urlData } = await supabase.storage
+      .from("slider-images")
+      .getPublicUrl(fileName);
+    const image = urlData.publicUrl;
+
+    const { error: dbError } = await supabase.from("slides").insert([
+      {
+        image_url: image,
+      },
+    ]);
+    if (dbError) {
+      alert("Dataya yuklerken xeta bashverdi" + dbError);
+    }
+    setUploading(false);
+  };
 
   return (
     <div>
-      <div>
-        <h2 className="text-2xl font-bold">Hazirda olan slaydlar</h2>
-        {loading ? (
-          <div className="text-center text-gray-500">Yüklənir...</div>
-        ) : slides.length === 0 ? (
-          <div className="text-center text-gray-500">Slaydlar yoxdur</div>
-        ) : (
-          <div className="flex gap-4 items-center">
-            {slides.map((slide) => (
-              <div
-                key={slide.id}
-                className="relative group w-[200px] h-[200px] overflow-hidden rounded-lg"
-              >
+      {/* datadan gelen fotolari ekrana listelemek */}
+      <section>
+        <h1 className="text-center text-3xl font-bold pt-5">
+          Movcut olan Sekiller
+        </h1>
+        <div>
+          {loading ? (
+            <div className="font-bold text-3xl text-center pt-3">
+              Yuklenir...
+            </div>
+          ) : (
+            <div className="flex mt-3 gap-5 justify-center">
+              {sliderPhotos.map((foto) => (
                 <Image
-                  src={slide.image_url || ""}
-                  alt={slide.title || ""}
-                  width={200}
-                  height={200}
-                  className="object-cover w-full h-full"
+                  src={foto.image_url}
+                  width={150}
+                  height={150}
+                  alt="fotos"
+                  key={foto.id}
                 />
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 cursor-pointer">
-                  <Trash2Icon
-                    className="w-12 h-12 text-white"
-                    onClick={() =>
-                      confirm("Bu slaydı silmək istədiyinizdən əminsiniz?") &&
-                      deleteSlidePhoto(slide.id, slide.image_url)
-                    }
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-      <div className="mt-10">
-        <h2 className="text-2xl font-bold">Yeni slayd əlavə et</h2>
-        <div className="flex flex-col gap-4">
-          <input
-            type="file"
-            accept="image/*"
-            className="w-full border-2 border-gray-300 rounded-md p-2"
-          />
-          <Button onClick={uploadSlidePhoto}>Yüklə</Button>
+              ))}
+            </div>
+          )}
         </div>
-      </div>
+      </section>
+      {/* Sliderin Database ine foto yuklemek ucun */}
+      <section>
+        <h1 className="text-center text-3xl font-bold pt-5">
+          Slaydere Sekil elave etmek
+        </h1>
+        <div className="flex justify-center mt-5">
+          {/* foto yuklemek ucun form */}
+          <form
+            className="p-6 bg-gray-800 rounded-xl shadow-lg max-w-sm"
+            onSubmit={handleFormSubmit}
+          >
+            <label className="block">
+              <span className="sr-only">Şəkil seçin</span>
+              <input
+                type="file"
+                accept="image/*"
+                className="block w-full text-sm text-gray-400
+        file:mr-4 file:py-2 file:px-4
+        file:rounded-full file:border-0
+        file:text-sm file:font-semibold
+        file:bg-green-50 file:text-green-700
+        hover:file:bg-green-100
+        cursor-pointer
+        focus:outline-none"
+                onChange={(e) =>
+                  setAddingSliderFile(e.target.files ? e.target.files[0] : null)
+                }
+              />
+            </label>
+            <button
+              type="submit"
+              className="bg-red-500 w-full rounded-lg mt-5 text-white font-bold"
+            >
+              {uploading ? "Yuklenir........." : "Yukle"}
+            </button>
+          </form>
+        </div>
+      </section>
     </div>
   );
 };
 
-export default PanelSlider;
+export default SliderPanel;

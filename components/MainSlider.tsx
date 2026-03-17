@@ -39,7 +39,7 @@ const MainSlider = () => {
   if (slides.length === 0) return null;
 
   return (
-    <section>
+    <section className="main-container">
       <Swiper
         effect={"coverflow"}
         grabCursor={true}
