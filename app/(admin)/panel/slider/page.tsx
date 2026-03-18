@@ -36,11 +36,11 @@ const SliderPanel = () => {
   //form submit olanda storage e ve table a fotograflari yuklemek ucun
 
   const handleFormSubmit = async (e: any) => {
+    e.preventDefault();
     if (!addingSliderFile) {
       alert("Duzgun foto Yukleyin");
       return;
     }
-    e.preventDefault();
     setUploading(true);
     const fileuzantisi = addingSliderFile?.name.split(".").pop();
     const fileName = `${Math.random()}.${fileuzantisi}`;

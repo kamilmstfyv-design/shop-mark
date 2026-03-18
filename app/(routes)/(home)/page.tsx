@@ -1,13 +1,14 @@
-import React from "react";
-
-const Panel = () => {
+import MainSlider from "@/components/MainSlider";
+import CategoryCard from "@/components/product/CategoryCard";
+const Home = () => {
   return (
     <div className="">
       <div>
-        <h1>Panel</h1>
+        <MainSlider />
+        <CategoryCard />
       </div>
     </div>
   );
 };
 
-export default Panel;
+export default Home;

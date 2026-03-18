@@ -5,7 +5,7 @@ const RoutesLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div>
       <Header />
-      <main className="main-container">{children}</main>
+      <main>{children}</main>
     </div>
   );
 };

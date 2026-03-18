@@ -1,12 +1,7 @@
 import React from "react";
-import Products from "../../_components/Products";
 
-const ProductsPage = () => {
-  return (
-    <div>
-      <Products />
-    </div>
-  );
+const ProductsPanel = () => {
+  return <div>ProductsPanel</div>;
 };
 
-export default ProductsPage;
+export default ProductsPanel;

@@ -4,8 +4,8 @@ import MobileMenu from "./MobileMenu";
 
 const Header = () => {
   return (
-    <header className="main-container py-4 bg-slate-800 text-white border-b border-gray-200 sticky top-0 z-50">
-      <div className="flex items-center justify-between pb-4">
+    <header className=" py-4 bg-slate-800 text-white border-b border-gray-200 sticky top-0 z-50">
+      <div className="flex items-center justify-between pb-4 main-container">
         <Link href="/">
           <h1 className="text-2xl font-bold">SerabEvi555</h1>
         </Link>
