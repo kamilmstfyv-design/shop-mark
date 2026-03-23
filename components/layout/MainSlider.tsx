@@ -1,5 +1,4 @@
 "use client";
-import { supabase } from "@/lib/supabase";
 import { Swiper, SwiperSlide } from "swiper/react";
 
 // Swiper stillərini import edirik
@@ -9,34 +8,13 @@ import "swiper/css/pagination";
 
 // Lazım olan modulları import edirik
 import { EffectCoverflow, Pagination, Autoplay } from "swiper/modules";
-import { useEffect, useState } from "react";
+import { MainSliderSkeleton } from "@/components/skeletons";
+import { useSlider } from "@/hooks/useSlider";
 const MainSlider = () => {
-  const [slides, setSlides] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { sliderPhotos, loading } = useSlider();
 
-  useEffect(() => {
-    const fetchSlides = async () => {
-      const { data, error } = await supabase
-        .from("slides")
-        .select("*")
-        .order("order", { ascending: true });
-      if (error) {
-        console.error("Slider yüklənməsində xəta:", error);
-      } else {
-        setSlides(data);
-      }
-      setLoading(false);
-    };
-    fetchSlides();
-  }, []);
-
-  if (loading)
-    return (
-      <div className="h-[300px] flex items-center justify-center text-white">
-        Yüklənir...
-      </div>
-    );
-  if (slides.length === 0) return null;
+  if (loading) return <MainSliderSkeleton />;
+  if (sliderPhotos.length === 0) return null;
 
   return (
     <section className="main-container">
@@ -60,7 +38,7 @@ const MainSlider = () => {
         modules={[EffectCoverflow, Pagination, Autoplay]}
         className="w-full py-12"
       >
-        {slides.map((slide) => (
+        {sliderPhotos.map((slide) => (
           <SwiperSlide
             key={slide.id}
             className="max-w-[280px] sm:max-w-[350px] md:max-w-[400px]"

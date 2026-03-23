@@ -1,6 +1,8 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
+/* Relative paths: Turbopack/PostCSS sometimes resolves bare package names from the wrong folder
+   (e.g. Desktop) when multiple lockfiles exist — these paths always point at this project. */
+@import "../node_modules/tailwindcss/index.css";
+@import "../node_modules/tw-animate-css/dist/tw-animate.css";
+@import "../node_modules/shadcn/dist/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
 

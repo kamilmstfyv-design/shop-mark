@@ -1,4 +1,4 @@
-import MainSlider from "@/components/MainSlider";
+import MainSlider from "@/components/layout/MainSlider";
 import CategoryCard from "@/components/product/CategoryCard";
 const Home = () => {
   return (
